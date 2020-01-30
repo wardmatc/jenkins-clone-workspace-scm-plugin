@@ -91,13 +91,19 @@ public class CloneWorkspacePublisher extends Recorder {
      * If true, don't use the Ant default file glob excludes.
      */
     private final boolean overrideDefaultExcludes;
+
+    /**
+     * If true, will delete any previously archived  workspace.
+     */
+    private int workspacesToKeep= 1;
     @DataBoundConstructor
-    public CloneWorkspacePublisher(String workspaceGlob, String workspaceExcludeGlob, String criteria, String archiveMethod, boolean overrideDefaultExcludes) {
+    public CloneWorkspacePublisher(String workspaceGlob, String workspaceExcludeGlob, String criteria, String archiveMethod, boolean overrideDefaultExcludes, int workspacesToKeep) {
         this.workspaceGlob = workspaceGlob.trim();
         this.workspaceExcludeGlob = Util.fixEmptyAndTrim(workspaceExcludeGlob);
         this.criteria = criteria;
         this.archiveMethod = archiveMethod;
         this.overrideDefaultExcludes = overrideDefaultExcludes;
+        this.workspacesToKeep = workspacesToKeep;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -129,6 +135,9 @@ public class CloneWorkspacePublisher extends Recorder {
         return overrideDefaultExcludes;
     }
 
+    public int getWorkspacesToKeep() {
+        return this.workspacesToKeep;
+    }
     @Override
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) throws InterruptedException {
         Result criteriaResult = CloneWorkspaceUtil.getResultForCriteria(criteria);
@@ -179,15 +188,25 @@ public class CloneWorkspacePublisher extends Recorder {
 
                     // Find the next most recent build meeting this criteria with an archived snapshot.
                     AbstractBuild<?,?> previousArchivedBuild = CloneWorkspaceUtil.getMostRecentBuildForCriteriaWithSnapshot(build.getPreviousBuild(), criteria);
-                    
-                    if (previousArchivedBuild!=null) {
-                        listener.getLogger().println(Messages.CloneWorkspacePublisher_DeletingOld(previousArchivedBuild.getDisplayName()));
+                    int workspaceCount = 2;
+
+                    while(previousArchivedBuild!=null) {
+                        if(workspaceCount<=this.workspacesToKeep) {
+                            workspaceCount++;
+                            previousArchivedBuild = previousArchivedBuild.getPreviousBuild();
+                            continue;
+                        }
+                        
                         try {
                             File oldWss = new File(previousArchivedBuild.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod(archiveMethod));
-                            Util.deleteFile(oldWss);
+                            if(oldWss.exists()) {
+                                listener.getLogger().println(Messages.CloneWorkspacePublisher_DeletingOld(previousArchivedBuild.getDisplayName()));
+                                Util.deleteFile(oldWss);
+                            }
                         } catch (IOException e) {
                            e.printStackTrace(listener.error(e.getMessage()));
                         }
+                        previousArchivedBuild = previousArchivedBuild.getPreviousBuild();
                     }
 
                     return true;

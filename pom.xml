@@ -32,7 +32,7 @@ THE SOFTWARE.
   <artifactId>clone-workspace-scm</artifactId>
   <packaging>hpi</packaging>
   <name>Jenkins Clone Workspace SCM Plug-in</name>
-  <version>0.7-SNAPSHOT</version>
+  <version>0.6-Fork-1</version>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/Clone+Workspace+SCM+Plugin</url>
   <description>Plugin to archive workspaces from one project and reuse those as SCM sources for other projects.</description>
   
@@ -96,9 +96,9 @@ THE SOFTWARE.
   </distributionManagement>
 
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/jenkins-clone-workspace-scm-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/jenkins-clone-workspace-scm-plugin.git</developerConnection>
-    <url>http://github.com/jenkinsci/jenkins-clone-workspace-scm-plugin</url>
+    <connection>scm:git:git://github.com/wardmatc/jenkins-clone-workspace-scm-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:wardmatc/jenkins-clone-workspace-scm-plugin.git</developerConnection>
+    <url>http://github.com/wardmatc/jenkins-clone-workspace-scm-plugin</url>
   </scm>
 
 

@@ -49,8 +49,20 @@ public class CloneWorkspaceUtil {
         return criteriaResult;
     }
 
-    public static AbstractBuild<?,?> getMostRecentBuildForCriteria(AbstractProject<?,?> project, String criteria) {
-        return getMostRecentBuildForCriteria(project.getLastBuild(), getResultForCriteria(criteria));
+    public static AbstractBuild<?,?> getMostRecentBuildForCriteria(AbstractProject<?, ?> project, String criteria,
+        String selectedBuildNumberValue){
+        AbstractBuild build = null;
+        if(criteria.equals("Build Number")) {
+            try{
+                int value = Integer.parseInt(selectedBuildNumberValue);
+                build = project.getBuildByNumber(value);
+            }catch(Exception ex) {}
+        }
+        else {
+            build = getMostRecentBuildForCriteria(project.getLastBuild(), getResultForCriteria(criteria));
+        }
+
+        return build;
     }
     
     public static AbstractBuild<?,?> getMostRecentBuildForCriteria(AbstractBuild<?,?> baseBuild, String criteria) {
@@ -67,7 +79,6 @@ public class CloneWorkspaceUtil {
             return getMostRecentBuildForCriteria(baseBuild.getPreviousBuild(), criteriaResult);
         }
     }
-
 
     public static AbstractBuild<?,?> getMostRecentBuildForCriteriaWithSnapshot(AbstractBuild<?,?> baseBuild, String criteria) {
         return getMostRecentBuildForCriteriaWithSnapshot(baseBuild, getResultForCriteria(criteria));

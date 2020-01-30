@@ -51,6 +51,7 @@ import static hudson.Util.fixEmptyAndTrim;
 
 import java.io.IOException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.io.FileReader;
 import java.io.BufferedReader;
@@ -87,10 +88,23 @@ public class CloneWorkspaceSCM extends SCM {
      */
     public String criteria;
 
+    /**
+     * The selected build number as a string
+     * Can be a fixed number or a variable that is later expanded
+     */
+    public final String selectedBuildNumber;
+
+    /**
+     * The selected build number value
+     * Can be a fixed number or a variable that is later expanded
+     */
+    public String selectedBuildNumberValue;
+
     @DataBoundConstructor
-    public CloneWorkspaceSCM(String parentJobName, String criteria) {
+    public CloneWorkspaceSCM(String parentJobName, String criteria, String selectedBuildNumber) {
         this.parentJobName = parentJobName;
         this.criteria = criteria;
+        this.selectedBuildNumber=selectedBuildNumber;
     }
 
     /**
@@ -109,7 +123,33 @@ public class CloneWorkspaceSCM extends SCM {
 
         return original;
     }
-        
+    
+    /**
+     * Get the selected build number.
+     *
+     * @return selectedBuildNumber.
+     */
+    public String getSelectedBuildNumber() {
+        return this.selectedBuildNumber;
+    }
+
+    /**
+     * Get the selected build number value.
+     *
+     * @return selectedBuildNumberValue.
+     */
+    public void setSelectedBuildNumberValue(String value) {
+        this.selectedBuildNumberValue = value;
+    }
+
+    /**
+     * Get the selected build number value.
+     *
+     * @return selectedBuildNumberValue.
+     */
+    public String getSelectedBuildNumberValue() {
+        return this.selectedBuildNumberValue;
+    }
     
     /**
      * Obtains the {@link WorkspaceSnapshot} object that this {@link SCM} points to,
@@ -129,8 +169,7 @@ public class CloneWorkspaceSCM extends SCM {
                 throw new ResolvedFailedException(Messages.CloneWorkspaceSCM_IncorrectJobType(parentJob));
         }
 
-        
-        AbstractBuild<?,?> b = CloneWorkspaceUtil.getMostRecentBuildForCriteria(job,criteria);
+        AbstractBuild<?,?> b = CloneWorkspaceUtil.getMostRecentBuildForCriteria(job,criteria,this.getSelectedBuildNumberValue());
         
         if(b==null)
             throw new ResolvedFailedException(Messages.CloneWorkspaceSCM_NoBuild(criteria,parentJob));
@@ -145,12 +184,24 @@ public class CloneWorkspaceSCM extends SCM {
     @Override
     public boolean checkout(AbstractBuild build, Launcher launcher, FilePath workspace, BuildListener listener, File changelogFile) throws IOException, InterruptedException {
         try {
+            String stringValue = build.getEnvironment(null).expand(selectedBuildNumber);
+            this.setSelectedBuildNumberValue(stringValue);
+
             workspace.deleteContents();
             String parentJob = getParamParentJobName(build);
+            
             Snapshot snapshot = resolve(parentJob);
-            listener.getLogger().println("Restoring workspace from build #" + snapshot.getParent().getNumber() + " of project " + parentJob);
+            listener.getLogger().println("Trying to restoring workspace from build #" + snapshot.getParent().getNumber() + " of project " + parentJob);
+            
+            try
+            {
             snapshot.restoreTo(workspace,listener);
-
+            }catch(FileNotFoundException ex)
+            {
+                listener.error("No workspace was found on build #" + snapshot.getParent().getNumber());
+                build.setResult(Result.FAILURE);
+                return false;
+            }
             // write out the parent build number file
             PrintWriter w = new PrintWriter(new FileOutputStream(getParentBuildFile(build)));
             try {
@@ -403,4 +454,7 @@ public class CloneWorkspaceSCM extends SCM {
 
    private static final Logger LOGGER = Logger.getLogger(CloneWorkspaceSCM.class.getName());
 
+   public String getMyString() {
+    return "Hello Jenkins!";
+    }
 }

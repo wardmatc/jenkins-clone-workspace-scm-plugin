@@ -38,6 +38,10 @@ THE SOFTWARE.
       <f:option value="Any" selected='${scm.criteria=="Any"}'>${%Most Recent Completed Build}</f:option>
       <f:option value="Not Failed" selected='${scm.criteria=="Not Failed"}'>${%Most Recent Not Failed Build}</f:option>
       <f:option value="Successful" selected='${scm.criteria=="Successful"}'>${%Most Recent Successful Build}</f:option>
+      <f:option value="Build Number" selected='${scm.criteria=="Build Number"}'>${%Specific build number}</f:option>
     </select>
+  </f:entry>
+  <f:entry title="${%Build Number}" field="selectedBuildNumber" help="/plugin/clone-workspace-scm/workspaceGlob.html">
+    <f:textbox/>
   </f:entry>
 </j:jelly>
